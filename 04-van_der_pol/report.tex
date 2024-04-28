@@ -1,0 +1,58 @@
+\documentclass[12pt]{article}
+\usepackage[usenames]{color} %used for font color
+\usepackage{amssymb} %maths
+\usepackage{amsmath} %maths
+\usepackage[utf8]{inputenc} %useful to type directly diacritic characters
+\usepackage[T1]{fontenc}
+\usepackage{polski}
+
+% \usepackage{listings}
+\usepackage[theme=default-plain]{jlcode} % https://github.com/wg030/jlcode
+\usepackage{graphicx}  %grafika
+
+%\usepackage{subcaption} %dwa rysunki obok siebie
+%\graphicspath{ {./rysunki/} } %skąd ma pobierać grafikę
+%\usepackage{svg} % for graphics in svg, with the first compilation enable: "-shell-escape" to use tools to convert svg
+%\usepackage{csvsimple} % to insert csv files 
+
+\usepackage[a4paper, left=3cm, right=3cm, top=1.5cm, bottom=2cm]{geometry}
+
+
+\setlength{\parskip}{10pt}
+\setlength{\parindent}{0pt}
+
+\title{Oscylator Van der Polla}
+\author{Bartosz Zbik}
+\date{2024-04-28} %format jest dowolny(może być nawet miesiąc słownie
+
+\begin{document}
+\maketitle %tworzy tytuł dokumentu
+
+Jawnie zamieniłem równanie drugiego stopnia
+\begin{equation}
+\ddot x = - x  - \mu (x^2 - 1) \dot x
+\end{equation}
+na układ dwóch równań stopnia pierwszego
+\begin{equation}
+\begin{cases}
+\dot x = v \\
+\dot v  =  - x  - \mu (x^2 - 1) v
+\end{cases}.
+\end{equation}
+
+Przedstawiony poniżej kod głównie służy do generowania rysunków, a cała logika rozwiązania równania znajduje się w definicji
+\texttt{vanderpol!} oraz \texttt{findsol}.
+
+Rozważyłem również przypadek $\mu=0$ nie wymieniony w poleceniu, żeby zobaczyć, że problem redukuje się do oscylatora harmonicznego.
+
+\section{Kod}
+\jlinputlisting{solution.jl}
+\clearpage
+
+
+\section{Wizualizacja wyników}
+\input{putplots.tex}
+
+
+
+\end{document}
