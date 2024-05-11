@@ -1,4 +1,4 @@
-using DifferentialEquations, Statistics, Distributions
+using DifferentialEquations, Statistics, Distributions, Printf
 using CairoMakie
 set_theme!(theme_latexfonts())
 
@@ -17,7 +17,7 @@ function kuramotoorder(u)
     return r, psi
 end
 
-function anliticalorder(k)
+function anliticalcauchyorder(k)
     k_c = 2.0
     if k < k_c
         return 0.0
@@ -27,18 +27,19 @@ function anliticalorder(k)
 end
 
 
-# N = 128
-# K = 2.0
-# tmax = 50.0
-# u0 = 2pi * rand(N)
-# p = [randn(N), K]
-# 
-# prob = ODEProblem(kuramoto!, u0, (0, tmax), p)
-# sol = solve(prob)
+# finds a single solution for the Kuramoto model
+# with random initial conditions and \omega ~ N(\mu=0, \sigma=1)
+function findsol(K, tmax, N)
+    u0 = 2pi * rand(N)
+    p = [randn(N), K]
 
+    prob = ODEProblem(kuramoto!, u0, (0, tmax), p)
+    return solve(prob)
+end
 
-# finds a single solution
-function findsol(K, tmax, N=128)
+# finds a single solution for the Kuramoto model
+# with random initial conditions and \omega ~ Cauchy(\mu=0, \sigma=1)
+function findcauchysol(K, tmax, N)
     # solves the Kuramoto model
     # with random initial conditions and \omega ~ Cauchy(\mu=0, \sigma=1)
     u0 = 2pi * rand(N)
@@ -48,48 +49,72 @@ function findsol(K, tmax, N=128)
     return solve(prob)
 end
 
+# ####################
+# Main, making plots
+# ####################
+
 # finds nrep solutions
-# plots how r evolves in time and compares it to the analytical solution
-function asymptoticorrder(K, tmax, nrep, N=128)
+# plots how r evolves in time
+function asymptoticnormal(K, tmax, nrep, N=128)
     s = [findsol(K, tmax, N) for i in 1:nrep]
-    trng = range(tmax/2, tmax, length=30)
+    trng = range(tmax / 2, tmax, length=30)
     m = mean([kuramotoorder(x(t))[1] for x in s, t in trng])
     fig = Figure()
     ax = Axis(fig[1, 1])
     for x in s
-        lines!(ax, 0..tmax, t -> kuramotoorder(x(t))[1], color=:black, alpha=0.1, label=nothing)
+        lines!(ax, 0 .. tmax, t -> kuramotoorder(x(t))[1], color=:black, alpha=0.1, label=nothing)
     end
-    lines!(ax, 0..tmax, t -> mean([kuramotoorder(x(t))[1] for x in s]))
-    hlines!(ax, [anliticalorder(K)], label="theory")
+    lines!(ax, 0 .. tmax, t -> mean([kuramotoorder(x(t))[1] for x in s]), label="<r>")
     ax.xlabel = "time"
-    ax.ylabel = L"order parameter $r$" 
-    ax.title = "K=$K, r = $(anliticalorder(K)), <r> = $m"
+    ax.ylabel = L"order parameter $r$"
+    ax.title = L"""\omega \sim \mathcal{N}(0, 1),~~ K/K_c = %$(@sprintf "%.2f" K/sqrt(8/pi)),~~ <r> = %$(@sprintf "%.3f" m)"""
+    ax.limits = (nothing, nothing, -0.05, 1.05) 
+    axislegend(ax, position=:lt)
     return fig
 end
 
-K_rng = [1/4, 1/2, 0.97, 1.0, 1.03, 3/2, 2.0] * 2.0
-
-for i in eachindex(K_rng)
-    tmax = 200
-    nrep = 20
-    N = 256
-    f = asymptoticorrder(K_rng[i],tmax, nrep, N)
-    save("kuramoto_$i.pdf", f)
-end
-
-
-
-function visualizepolar(sol, n, t)
-    fig = Figure()
-    ax = PolarAxis(fig[1, 1], rlimits=(0, 1.1))
-    scatter!(ax, sol(t), ones(n))
-    return fig
-end
-
-function visualizeorder(sol, tmax)
+# finds nrep solutions
+# plots how r evolves in time and compares it to the analytical solution
+function asymptoticcauchy(K, tmax, nrep, N=128)
+    s = [findcauchysol(K, tmax, N) for i in 1:nrep]
+    trng = range(tmax / 2, tmax, length=30)
+    m = mean([kuramotoorder(x(t))[1] for x in s, t in trng])
     fig = Figure()
     ax = Axis(fig[1, 1])
-    lines!(ax, 0 .. tmax, t -> (kuramotoorder(sol(t))[1]))
+    for x in s
+        lines!(ax, 0 .. tmax, t -> kuramotoorder(x(t))[1], color=:black, alpha=0.1, label=nothing)
+    end
+    lines!(ax, 0 .. tmax, t -> mean([kuramotoorder(x(t))[1] for x in s]), label="<r>")
+    hlines!(ax, [anliticalcauchyorder(K)], label="theory", linestyle=:dash, color=:magenta)
+    ax.xlabel = "time"
+    ax.ylabel = L"order parameter $r$"
+    ax.title = L"""\omega \sim \mathcal{Cauchy}(0, 1),~~ K/K_c=%$(@sprintf "%.2f" K/2),~~ r=%$(@sprintf "%.3f" anliticalcauchyorder(K)),~~ <r>=%$(@sprintf "%.3f" m)"""
+    ax.limits = (nothing, nothing, -0.05, 1.05) 
+    axislegend(ax, position=:lt)
     return fig
+end
+
+
+K_c_normal = sqrt(8 / pi)
+K_rng_normal = [0, 1 / 4, 1 / 2, 0.97, 1.0, 1.03, 3 / 2, 2.0, 10] * K_c_normal
+
+for i in eachindex(K_rng_normal)
+    tmax = 200
+    nrep = 30
+    N = 512
+    f = asymptoticnormal(K_rng_normal[i], tmax, nrep, N)
+    save("out/kuramoto_normal_$i.pdf", f)
+end
+
+
+K_c_cauchy = 2.0
+K_rng_cauchy = [0, 1 / 4, 1 / 2, 0.97, 1.0, 1.03, 3 / 2, 2.0, 10] * K_c_cauchy
+
+for i in eachindex(K_rng_cauchy)
+    tmax = 200
+    nrep = 30
+    N = 512
+    f = asymptoticcauchy(K_rng_cauchy[i], tmax, nrep, N)
+    save("out/kuramoto_cauchy_$i.pdf", f)
 end
 
