@@ -1,0 +1,74 @@
+\documentclass[12pt]{article}
+\usepackage[usenames]{color} %used for font color
+\usepackage{amssymb} %maths
+\usepackage{amsmath} %maths
+\usepackage[utf8]{inputenc} %useful to type directly diacritic characters
+\usepackage[T1]{fontenc}
+\usepackage{polski}
+\usepackage{pgffor}
+
+% \usepackage{listings}
+\usepackage[theme=default-plain]{jlcode} % https://github.com/wg030/jlcode
+\usepackage{graphicx}  %grafika
+
+%\usepackage{subcaption} %dwa rysunki obok siebie
+%\graphicspath{ {./rysunki/} } %skąd ma pobierać grafikę
+%\usepackage{svg} % for graphics in svg, with the first compilation enable: "-shell-escape" to use tools to convert svg
+%\usepackage{csvsimple} % to insert csv files 
+
+\usepackage[a4paper, left=3cm, right=3cm, top=1.5cm, bottom=2cm]{geometry}
+
+
+\setlength{\parskip}{10pt}
+\setlength{\parindent}{0pt}
+
+\title{Model gradacji owadów}
+\author{Bartosz Zbik}
+\date{2024-05-18} %format jest dowolny(może być nawet miesiąc słownie
+
+\begin{document}
+\maketitle %tworzy tytuł dokumentu
+
+Wyjściowe równanie
+\begin{equation}
+\frac{dN}{dt} = r_0 N  \left ( 1 - \frac{N}{K} \right ) - \frac{BN^2}{A^2 + N^2}
+\end{equation}
+możemy zredukować (przy pomocy linowych transformacji) do
+\begin{equation}
+\frac{dn}{d\tau} = r n  \left ( 1 - \frac{n}{k} \right ) - \frac{n^2}{1 + n^2},
+\end{equation}
+gdzie
+\begin{equation}
+n = \frac{N}{A}, ~~ \tau = \frac{B}{A} t, ~~ r = \frac{A}{B} r_0, ~~ k = \frac{1}{A} k.
+\end{equation}
+
+\section{Kod}
+\jlinputlisting{solution.jl}
+\clearpage
+
+
+\section{Wizualizacja wyników}
+We wszystkich przypadkach układ dążył do stanu stacjonarnego.
+ 
+\subsection{Rozwiązania dla $k=8$}
+Dla $k=8$ można zauważyć, że są co najmniej dwa stabilne stany stacjonarne.
+Jeden dla $n^*$ gdzieś pomiędzy $0.6$, a $0.7$.
+Drugi  dla $n^*$ gdzieś pomiędzy $4.5$, a $5.0$.
+\foreach \n in {1,...,4}{
+\includegraphics[width=\linewidth]{out/model_k8_\n}
+
+}
+\clearpage
+
+
+\subsection{Rozwiązania dla $k=5$}
+\foreach \n in {1,...,2}{
+\includegraphics[width=\linewidth]{out/model_k5_\n}
+
+}
+
+
+
+
+
+\end{document}
